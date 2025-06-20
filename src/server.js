@@ -28,10 +28,10 @@ app.use((req, res, next) => {
   });
   
   // Import user routes
-  const userRoutes = require("./routes/userRoutes");
+  const profileRoutes = require("./routes/profileRoutes");
   
   // Mount user routes under /api/user
-  app.use("/api/user", userRoutes);
+  app.use("/api", profileRoutes);
   
   // Catch-all route for unmatched paths
   app.use((req, res) => {
