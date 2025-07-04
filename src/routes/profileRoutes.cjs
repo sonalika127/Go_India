@@ -1,9 +1,9 @@
 const express = require("express");
 const router = express.Router();
-const User = require("../models/User");
+const User = require("../models/User.cjs");
 
 // Create Profile
-router.post("/profile", async (req, res) => {
+router.post("/", async (req, res) => {
   try {
     const { phone, name, gender, email, dateOfBirth, emergencyContact } = req.body;
 
@@ -15,7 +15,7 @@ router.post("/profile", async (req, res) => {
     let user = await User.findOne({ phone });
 
     if (user) {
-      return res.status(400).json({ message: "User already exists." });
+      return res.status(200).json({ message: "User already exists." });
     }
 
     // Create a new user
@@ -35,7 +35,7 @@ router.post("/profile", async (req, res) => {
 });
 
 // Update Profile
-router.put("/profile/:phone", async (req, res) => {
+router.put("/:phone", async (req, res) => {
   try {
     const { phone } = req.params; // Get phone from URL
     const { name, gender, email, dateOfBirth, emergencyContact } = req.body;
@@ -70,7 +70,7 @@ router.put("/profile/:phone", async (req, res) => {
 });
 
 // Fetch Profile
-router.get("/profile/:phone", async (req, res) => {
+router.get("/:phone", async (req, res) => {
   try {
     const { phone } = req.params;
 
@@ -93,7 +93,7 @@ router.get("/profile/:phone", async (req, res) => {
 });
 
 // Delete Profile
-router.delete("/profile/:phone", async (req, res) => {
+router.delete("/:phone", async (req, res) => {
   try {
     const { phone } = req.params;
 

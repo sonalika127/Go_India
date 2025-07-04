@@ -1,56 +1,32 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-const bodyParser = require('body-parser');
-require('dotenv').config();
+import express  from 'express';
+import cors     from 'cors';
+import morgan   from 'morgan';
+import dotenv   from 'dotenv';
 
-const app=express()
+import connectDB   from './config/db.js';
+import fareRoutes  from './routes/fareRoutes.js';
+import rateRoutes  from './routes/rateRoutes.js';
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const profileRoutes = require('./routes/profileRoutes.cjs');
+dotenv.config();
+await connectDB();
 
-// Middleware to log all incoming requests
-app.use((req, res, next) => {
-    console.log("\n--- Incoming Request ---");
-    console.log("Method:", req.method);
-    console.log("URL:", req.originalUrl);
-    console.log("Headers:", req.headers);
-    // Note: body may be empty here if body-parser is not yet run
-    next();
-  });
-  
-  app.use(cors());
-  
-  // Body parser middleware to parse JSON bodies
-  app.use(bodyParser.json());
-  
-  // Log the body after parsing
-  app.use((req, res, next) => {
-    console.log("Request Body:", req.body);
-    next();
-  });
-  
-  // Import user routes
-  const profileRoutes = require("./routes/profileRoutes");
-  
-  // Mount user routes under /api/user
-  app.use("/api", profileRoutes);
-  
-  // Catch-all route for unmatched paths
-  app.use((req, res) => {
-    console.log("404 Not Found for:", req.method, req.originalUrl);
-    res.status(404).json({ message: "Not Found" });
-  });
-  
-  // Error handling middleware (logs error stack)
-  app.use((err, req, res, next) => {
-    console.error("Error Middleware:", err.stack);
-    res.status(err.status || 500).json({ message: err.message || "Internal Server Error" });
-  });
-  
+const app = express();
+app.use(morgan('dev'));
+app.use(cors());
+app.use(express.json());
 
-// Connect to MongoDB
-mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log('MongoDB connected'))
-  .catch((err) => console.log('MongoDB connection error:', err));
+app.get('/', (_req, res) => res.send('Go India backend live 🚀'));
 
-// Start server
+app.use('/api/fares', fareRoutes);
+app.use('/api/rates', rateRoutes); // optional admin endpoints
+app.use('/api/profile', profileRoutes);
+app.use((_, res) => res.status(404).json({ message: 'Not Found' }));
+app.use((err, _req, res, _next) => {
+  console.error(err);
+  res.status(err.status || 500).json({ message: err.message || 'Server Error' });
+});
+
 const PORT = process.env.PORT || 5002;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`🚀  Server running on port ${PORT}`));
