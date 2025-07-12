@@ -1,6 +1,9 @@
-import { Router } from 'express';
-import { calculateFare } from '../controllers/fareController.js';
+import { Router }     from 'express';
+import { createFare } from '../controllers/fareController.js';
 
 const router = Router();
-router.post('/calculate', calculateFare);
+
+// POST  /api/fares/calc
+router.post('/calc', createFare);
+router.get('/ping', (req, res) => res.json({ ok: true }));
 export default router;

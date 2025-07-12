@@ -1,20 +1,61 @@
 import mongoose from 'mongoose';
 
-const rateSchema = new mongoose.Schema({
-  state: { type: String, required: true, lowercase: true, trim: true },
-  city:  { type: String, required: true, lowercase: true, trim: true },
-  vehicleType: { type: String, required: true, trim: true },
+/**
+ * One document = one tariff card for ONE city/state + ONE vehicle type.
+ * “category” tells calcFare whether it’s a short‑trip, long‑trip, or parcel product.
+ */
+const rateSchema = new mongoose.Schema(
+  {
+    /* ───────── General keys ───────── */
+    state : { type: String, required: true },
+    city  : { type: String, required: false },          // city optional (long‑trip uses only state)
 
-  baseFare:            { type: Number, required: true }, // ₹
-  baseFareDistanceKm:  { type: Number, required: true }, // km included in base
-  perKm:               { type: Number, required: true }, // ₹ / km beyond base
-  perMin:              { type: Number, required: true }, // ₹ / minute
-  platformFeePercent:  { type: Number, default: 9 },     // % of subtotal
-  gstPercent:          { type: Number, default: 5 },     // fixed 5 %
-  minDistanceKm:       { type: Number, default: 2 },
-  minFare:             { type: Number, required: true }  // minimal fare
-}, { timestamps: true });
+    vehicleType : {
+      type: String,
+      required: true,
+      enum: ['bike', 'auto', 'car', 'premium', 'xl', 'lcv', 'icv']
+    },
 
-rateSchema.index({ state:1, city:1, vehicleType:1 }, { unique: true });
+    category : {
+      type: String,
+      required: true,
+      enum: ['short', 'long', 'parcel']
+    },
+
+    /* ───────── Short‑trip fields ───────── */
+    baseFareDistanceKm : Number,
+    baseFare           : Number,
+    perKm              : Number,
+    perMin             : Number,
+    minFare            : Number,
+    platformFeePercent : Number,
+    gstPercent         : Number,
+
+    /* ───────── Long‑trip fields ───────── */
+    fuelPerKm              : Number,
+    day1DriverFee          : Number,
+    subsequentDayDriverFee : Number,
+    halfDayReturnFee       : Number,
+
+    /* ───────── Parcel‑delivery fields ───────── */
+    platformFee : Number,    // flat handling / platform margin (₹)
+    maxWeightKg : Number,    // hard weight limit for bikes (e.g., 10 kg)
+    weightRates : {
+      baseKg     : Number,   // included weight (e.g., 5 kg)
+      baseCharge : Number,   // charge if weight > baseKg
+      perExtraKg : Number    // ₹ per extra kg beyond baseKg
+    }
+  },
+  { timestamps: true }
+);
+
+/* Unique index when city exists (short & parcel). Long‑trip docs omit city */
+rateSchema.index(
+  { state: 1, city: 1, vehicleType: 1, category: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { city: { $exists: true } }
+  }
+);
 
 export default mongoose.model('Rate', rateSchema);

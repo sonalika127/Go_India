@@ -1,19 +1,28 @@
-import Rate from '../models/Rate.js';
+import asyncHandler from 'express-async-handler';
+import Rate         from '../models/Rate.js';
 
-export const upsertRate = async (req, res, next) => {
-  try {
-    const rate = await Rate.findOneAndUpdate(
-      { state: req.body.state.toLowerCase(), city: req.body.city.toLowerCase(), vehicleType: req.body.vehicleType },
-      req.body,
-      { new: true, upsert: true, runValidators: true }
-    );
-    res.json(rate);
-  } catch (err) { next(err); }
-};
+/* GET /api/rates?state=xx&city=yy&vehicleType=zz */
+export const getRates = asyncHandler(async (req, res) => {
+  const rates = await Rate.find(req.query);
+  res.json(rates);
+});
 
-export const listRates = async (req, res, next) => {
-  try {
-    const rates = await Rate.find({ state: req.params.state.toLowerCase() });
-    res.json(rates);
-  } catch (err) { next(err); }
-};
+/* POST /api/rates  (create) */
+export const createRate = asyncHandler(async (req, res) => {
+  const rate = await Rate.create(req.body);
+  res.status(201).json(rate);
+});
+
+/* PUT /api/rates/:id  (full replace) */
+export const updateRate = asyncHandler(async (req, res) => {
+  const rate = await Rate.findByIdAndUpdate(req.params.id, req.body, { new:true, runValidators:true });
+  if (!rate) return res.status(404).json({ message:'Rate not found' });
+  res.json(rate);
+});
+
+/* DELETE /api/rates/:id */
+export const deleteRate = asyncHandler(async (req, res) => {
+  const rate = await Rate.findByIdAndDelete(req.params.id);
+  if (!rate) return res.status(404).json({ message:'Rate not found' });
+  res.json({ message:'Rate deleted' });
+});
